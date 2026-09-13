@@ -1,7 +1,7 @@
 # cms-openpayments-analytics
 
 A dbt project over DuckDB that turns **CMS Open Payments — 49M rows, 29 GB of source CSV —
-into tested analytical marts on a laptop, in minutes, for $0.**
+into tested analytical marts on a laptop, for $0.**
 
 No cloud warehouse. No Spark. No credit card.
 
@@ -18,6 +18,13 @@ This project:
 3. Runs a test suite that encodes real analytical failures, not just schema checks
 
 Typical query latency against 46M rows: **0.1–0.6 seconds**.
+
+**Build time is not two minutes — be realistic about it.** A full `dbt build` from Parquet
+takes **~73 minutes** on a 4-thread laptop, and two models dominate:
+`mart_npi_manufacturers` (~16 min) and `mart_marketing_audience` (~57 min, a `string_agg`
+over 9.1M relationship rows). Everything else finishes in about 25 seconds. Making those two
+incremental on `Program_Year` is the obvious next step; until then, use
+`dbt build --select <model>` while iterating rather than rebuilding the world.
 
 ## Why tests matter more than speed
 
@@ -88,8 +95,8 @@ slots 1–2 and `VARCHAR` in slots 3–5. Comparing a BIGINT to `''` throws at r
 
 ## Performance note
 
-`mart_npi_manufacturers` takes ~16 minutes on 46M rows. The first version was far worse and
-was killed twice: it called `normalize_entity()` inline, running two regexes per row across
+`mart_npi_manufacturers` takes ~16 minutes on 46M rows, and `mart_marketing_audience` ~57.
+The first version of the manufacturer model was far worse and was killed twice: it called `normalize_entity()` inline, running two regexes per row across
 46M rows. There are only ~2,472 distinct manufacturer names in the entire corpus, so the
 normalisation belongs in a dimension that is joined once — not an expression evaluated per
 row. Same output, no runaway. Making it incremental on `Program_Year` is the remaining fix.
