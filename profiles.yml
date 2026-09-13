@@ -1,0 +1,10 @@
+openpayments_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ./data/openpayments.duckdb
+      threads: 4
+      settings:
+        memory_limit: '10GB'
+        preserve_insertion_order: false

@@ -1,0 +1,36 @@
+version: 2
+
+# Absolute paths deliberately. Relative paths resolve against the process working directory,
+# not the project, so models silently broke when anything ran dbt from elsewhere. If this
+# project moves machine, DATA_ROOT below is the single line to change.
+
+sources:
+  - name: cms
+    description: >
+      CMS Open Payments detail files PY2023-2025, converted from 29 GB of CSV to 718 MB of
+      ZSTD Parquet. Public data. NO PHI -- that boundary is deliberate and must hold, because
+      these tables are reachable by the agent stack, which sends results to a third-party LLM.
+    meta:
+      owner: analytics-team
+    tables:
+      - name: op_general
+        description: General payments -- speaking, consulting, meals, travel. 46,364,664 rows.
+        meta:
+          external_location: "read_parquet('./data/parquet/op_general.parquet')"
+      - name: op_research
+        description: >
+          Research payments. 2,841,648 rows. Carries Principal_Investigator_1..5_NPI,
+          Name_of_Study and ClinicalTrials_Gov_Identifier -- trial evidence, where
+          op_general is only a proxy for it.
+        meta:
+          external_location: "read_parquet('./data/parquet/op_research.parquet')"
+
+  - name: derived
+    description: >
+      Scoring produced by the earlier Python pipeline, pending migration into dbt. Until that
+      migration lands this is the one input to the stack that is not reproducible from source.
+    tables:
+      - name: op_scored
+        description: 1,399,412 NPIs with op_score and op_intent_tier (percentile within subspecialty).
+        meta:
+          external_location: "read_csv('./data/op_scored.csv', union_by_name=true, ignore_errors=true)"

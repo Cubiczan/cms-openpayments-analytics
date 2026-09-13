@@ -1,0 +1,32 @@
+version: 2
+models:
+  - name: stg_manufacturers
+    description: One row per real company. entity_key collapses spelling variants.
+    columns:
+      - name: entity_key
+        description: Normalised join key. NEVER group by display_name instead of this.
+        tests: [unique, not_null]
+      - name: display_name
+        tests: [not_null]
+      - name: total_dollars
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, inclusive: true}
+  - name: stg_research_payments
+    description: Research payments with the site resolved and non-sites flagged.
+    columns:
+      - name: record_id
+        tests: [not_null]
+      - name: is_real_site
+        tests: [not_null]
+      - name: amount
+        tests: [not_null]
+  - name: stg_research_investigators
+    description: >
+      One row per (payment, principal investigator). Unpivots all five PI slots --
+      counting only slot 1 undercounts investigators.
+    columns:
+      - name: npi
+        tests: [not_null]
+      - name: pi_slot
+        tests:
+          - accepted_values: {values: [1,2,3,4,5]}

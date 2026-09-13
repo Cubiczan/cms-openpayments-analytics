@@ -1,0 +1,49 @@
+version: 2
+models:
+  - name: mart_sponsor_ranking
+    description: Corrected sponsor ranking. Supersedes the table in GenAI_Revenue_Thesis.pdf.
+    columns:
+      - name: sponsor
+        tests: [unique, not_null]
+      - name: total_dollars
+        tests: [not_null]
+  - name: mart_bh_research_sites
+    description: Behavioural-health research sites, IRBs excluded.
+    columns:
+      - name: site_key
+        tests: [unique, not_null]
+      - name: investigators
+        tests: [not_null]
+  - name: mart_bh_investigators
+    description: Named principal investigators — trial evidence, not proxy.
+    columns:
+      - name: npi
+        tests: [unique, not_null]
+  - name: mart_psychiatry_bench
+    description: Psychiatrists segmented into active investigators vs untapped bench.
+    columns:
+      - name: npi
+        tests: [unique, not_null]
+      - name: capacity_segment
+        tests:
+          - accepted_values:
+              values: ['untapped_bench','active_investigator','low_signal']
+  - name: mart_npi_manufacturers
+    description: >
+      Every NPI-to-manufacturer relationship, untruncated. Fixes the the CRM property
+      truncation that hid Neuronetics and LivaNova.
+    columns:
+      - name: npi
+        tests: [not_null]
+      - name: sponsor_key
+        tests: [not_null]
+  - name: mart_marketing_audience
+    description: >
+      The addressable table. Identity + intent + evidence per clinician, with segment
+      flags matching SEGMENT_PROMPT_LIBRARY.md.
+    columns:
+      - name: npi
+        tests: [unique, not_null]
+      - name: op_intent_tier
+        tests:
+          - accepted_values: {values: ['Tier 1','Tier 2','Tier 3','Tier 4']}

@@ -1,0 +1,24 @@
+# Build artefacts
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# Data — never commit. The Parquet corpus is 718 MB and the DuckDB file is rebuilt
+# from it in ~35 seconds by `dbt build`. Source data comes from CMS, not from us.
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.csv
+
+# Secrets — profiles.yml holds no credentials today (DuckDB is a local file), but if a
+# cloud target is ever added, keep the real one out and commit profiles.example.yml.
+.env
+.env.*
+*.pem
+
+# data
+data/
+*.duckdb
+*.duckdb.wal
+*.parquet
