@@ -101,6 +101,46 @@ The first version of the manufacturer model was far worse and was killed twice: 
 normalisation belongs in a dimension that is joined once — not an expression evaluated per
 row. Same output, no runaway. Making it incremental on `Program_Year` is the remaining fix.
 
+## Governed answers: the CHP promotion gate
+
+`answers/` is a minimal governed answer surface over the marts — module + CLI, no web
+framework. Ask a question with a single read-only SELECT, and the answer is promoted
+through the Consensus Hardening Protocol (`consensus-hardening-protocol`, ported from
+the erp-control-plane GenBI gate):
+
+1. **R0 gate** — before the engine: the request must be solvable, scoped, valid, and
+   worth it (analytical phrasing or a golden-set match).
+2. **Guardrails** — SELECT-only, single statement, statement timeout, row cap, and the
+   connection is always opened `read_only=True` (one-writer rule above).
+3. **Foundation pass** — the deterministic adversary scores the answer: guardrails 40 +
+   bounded result 30 + golden parity 30 against `golden_qa.yaml` (dbt-computed values;
+   the dbt tests in `tests/` are the golden rules). CMS Open Payments answers are
+   financial-disclosure claims, so a parity-verified answer is finance-domain and gates
+   at CHP's finance floor of **100** — without parity evidence a promotion needs a named
+   human confirmer. A parity **mismatch is fatal**, even with a confirmer.
+4. **Human lock** — every promotion opens `PROVISIONAL_LOCK`; `--confirmed-by` locks it
+   via CHP third-party validation. `CHP_REQUIRE_HUMAN_LOCK` is **on by default**.
+5. **Decision record** — the case, verdicts, parity evidence, and artifacts are sealed
+   into a CHP payload envelope with a SHA-256 body digest and appended to the
+   append-only JSONL ledger (gitignored, under `data/`). Reads re-validate integrity and
+   expose `integrity_valid`.
+
+```bash
+python -m answers ask \
+  --question "How many untapped bench investigators are in the psychiatry population?" \
+  --sql "select count(*) from mart_psychiatry_bench where capacity_segment = 'untapped_bench'" \
+  --confirmed-by sam@cubiczan.com
+
+python -m answers decisions --limit 20          # read the ledger
+python answers/generate_golden.py --check       # golden set vs built marts
+```
+
+Environment: `OP_DUCKDB_PATH` (default `data/openpayments.duckdb`), `CHP_GOLDEN_PATH`
+(default `golden_qa.yaml`), `CHP_DECISIONS_PATH` (default `data/chp/decisions.jsonl`),
+`CHP_ROW_CAP`, `CHP_STATEMENT_TIMEOUT_SECONDS`, and `CHP_REQUIRE_HUMAN_LOCK`
+(default on; `0`/`false`/`no`/`off` disables). Regenerate the golden set from a built
+mart with `python answers/generate_golden.py` after `dbt build`.
+
 ## Scope
 
 Public CMS and commercial data only. **No patient-level data belongs in this project** — the

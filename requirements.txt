@@ -1,0 +1,7 @@
+# Runtime dependency of the governed-answer surface (answers/):
+# the CHP-hardened answer promotion gate. Pure Python, no transitive deps.
+#
+# The dbt stack itself is installed per the README quick start:
+#   pip install dbt-core dbt-duckdb
+# dbt-duckdb brings duckdb and PyYAML, which answers/ also imports.
+consensus-hardening-protocol==0.1.1

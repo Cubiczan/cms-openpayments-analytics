@@ -1,0 +1,54 @@
+# Golden Q->A set for the CHP answer-promotion gate: parity evidence pinned to
+# dbt-computed values in the marts. The repo's dbt tests (tests/*.sql) are the
+# golden RULES; the cases below are the dbt-computed VALUES those rules and the
+# README document, kept as the promotion-time parity source.
+#
+# PROVENANCE: every expected value below is stated in the repo itself
+# (README.md, tests/, macros/) — not re-derived here. Regenerate from the
+# built mart after `dbt build` with:
+#     python answers/generate_golden.py
+# which recomputes each case from the DuckDB marts and diffs against this file.
+schema_version: 1
+generated_from: dbt marts (README/test-documented values); regenerate with answers/generate_golden.py
+window:
+  program_years: '2023-2025'
+cases:
+- id: manufacturer_entity_count
+  # macros/normalize_entity.sql: 2,472 written names resolve to 2,269 real
+  # entities; stg_manufacturers is one row per real entity.
+  question: How many real manufacturer entities made payments?
+  metric: manufacturer_entity_count
+  unit: count
+  expected: 2269
+  tolerance: 0.5
+- id: livanova_total_dollars
+  # README + mart_npi_manufacturers.sql: LivaNova, the largest psychiatry
+  # spender at $55.2M (3 significant figures -> 1% band).
+  question: What is the total payment amount from LivaNova?
+  metric: livanova_dollars
+  unit: usd
+  expected: 55200000
+  tolerance: 552000
+- id: neuronetics_total_dollars
+  # README + mart_npi_manufacturers.sql: $2.8M in source (2 significant
+  # figures -> +/-50k band).
+  question: What is the total payment amount from Neuronetics?
+  metric: neuronetics_dollars
+  unit: usd
+  expected: 2800000
+  tolerance: 50000
+- id: untapped_bench_count
+  # tests/assert_bench_exceeds_active.sql: 1,929 untapped bench against 626
+  # active investigators within the scored psychiatry population.
+  question: How many untapped bench investigators are in the psychiatry population?
+  metric: untapped_bench_count
+  unit: count
+  expected: 1929
+  tolerance: 0.5
+- id: active_investigator_count
+  # tests/assert_bench_exceeds_active.sql: the 626 active side of the monitor.
+  question: How many active investigators are in the psychiatry population?
+  metric: active_investigator_count
+  unit: count
+  expected: 626
+  tolerance: 0.5

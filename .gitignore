@@ -3,6 +3,10 @@ target/
 dbt_packages/
 logs/
 .user.yml
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
 
 # Data — never commit. The Parquet corpus is 718 MB and the DuckDB file is rebuilt
 # from it in ~35 seconds by `dbt build`. Source data comes from CMS, not from us.
